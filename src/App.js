@@ -1,24 +1,31 @@
-import logo from './logo.svg';
-import './App.css';
+import { useState } from "react";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { Outlet } from "react-router-dom";
+import SideMenu from "./components/SideMenu";
+import DashboardPage from "./pages/DashboardPage";
+import LoginPage from "./pages/LoginPage";
+import TransaksiPage from "./pages/TransaksiPage";
+
+const Protected = () => {
+  // TODO: CREATE endpoint for checking token when this component invoked!
+  const [isAuthenticated, setIsAuthenticated] = useState(localStorage.getItem("token"))
+  return <>
+      <SideMenu />
+      {isAuthenticated ? <Outlet />: <LoginPage />}
+    </>
+};
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Protected />}>
+          <Route index element={<DashboardPage />} />
+          <Route path="/transaksi" element={<TransaksiPage />} />
+        </Route>
+        <Route path="/login" element={<LoginPage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
