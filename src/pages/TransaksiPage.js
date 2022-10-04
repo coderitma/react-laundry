@@ -1,6 +1,24 @@
+import axios from "axios";
 import { useState } from "react"
-import { Card, Col, Container, Row, Form, Button, Table } from "react-bootstrap"
+import { Card, Col, Container, Row, Form, Button, Table, Modal } from "react-bootstrap"
 
+
+const ModalCetak = ({heading, body, status, handleClose, cetakFaktur}) => {
+  return <Modal show={status} onHide={handleClose}>
+    <Modal.Header closeButton>
+      <Modal.Title>{ heading }</Modal.Title>
+    </Modal.Header>
+    <Modal.Body>{ body }</Modal.Body>
+    <Modal.Footer>
+      <Button variant="secondary" onClick={handleClose}>
+        Close
+      </Button>
+      <Button variant="primary" onClick={cetakFaktur}>
+        Cetak Faktur
+      </Button>
+    </Modal.Footer>
+  </Modal>
+}
 
 const TransaksiPage = () => {
   const [terima, setTerima] = useState({
@@ -10,7 +28,12 @@ const TransaksiPage = () => {
     nomorHP: "",
     uangMuka: 0,
     berat: 0,
+    daftarBarang: []
   });
+
+  const [nomorTerima, setNomorTerima] = useState("");
+  const [filePDFName, setFilePDFName] = useState("");
+  const [statusModal, setStatusModal] = useState(false);
 
   const [barang, setBarang] = useState({
     nama: "",
@@ -47,15 +70,70 @@ const TransaksiPage = () => {
     arr.splice(index, 1)
     setDaftarBarang(arr);
   }
+
+  const handleDaftarBarang = (index, e) => {
+    const name = e.target.name 
+    const value = e.target.value 
+    let arr = [...daftarBarang]
+    arr[index][name] = value;
+    setDaftarBarang(arr);
+  }
+
+  const handleKirim = () => {
+    let payload = {...terima, ["daftarBarang"]: daftarBarang}
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': localStorage.getItem("token")
+      }
+    }
+    
+    axios.post('http://localhost:3001/faktur', payload, config)
+      .then(response => {
+        setNomorTerima(response.data._id);
+        setFilePDFName(response.data.tanggalTerima)
+        setStatusModal(true);
+        console.log(response);
+      })
+      .catch(error => {
+        console.log(error)
+      })
+  }
+
+  const downloadPDF = () => {
+    axios({
+      url: `http://localhost:3001/faktur/${nomorTerima}/cetak`,
+      method: 'GET',
+      responseType: 'blob', // important
+      headers: {
+        'Authorization': localStorage.getItem("token"),
+      }
+    }).then((response) => {
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `INVOICE-${filePDFName}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+    });
+  }
   return (
     <>
+      <ModalCetak
+        heading={`Cetak Faktur ${nomorTerima}?`}
+        body={"Untuk mencetak faktur ke dalam PDF, klik Download PDF"}
+        status={statusModal}
+        handleClose={() => setStatusModal(!statusModal)}
+        cetakFaktur={downloadPDF}
+      />
       <Container className="mt-4"> 
         <Row>
           <Col md={4}>
             <Card className="shadow mb-4">
               <Card.Body>
-                <Button variant="primary">Simpan</Button>&nbsp;
-                <Button variant="danger">Batalkan</Button>
+                <Button onClick={handleKirim} variant="primary">Simpan</Button>&nbsp;
+                <Button onClick={downloadPDF} variant="danger">Download PDF</Button>
+
               </Card.Body>
             </Card>
             <Card className="mb-4 shadow">
@@ -153,8 +231,20 @@ const TransaksiPage = () => {
                       <tbody>
                         {daftarBarang.map((brg, index) => (
                           <tr key={index}>
-                            <td>{brg.nama}</td>
-                            <td>{brg.jumlah}</td>
+                            <td>
+                              <Form.Control 
+                                onChange={(e) => handleDaftarBarang(index, e)}
+                                name="nama"
+                                plaintext
+                                value={brg.nama} />
+                            </td>
+                            <td>
+                              <Form.Control 
+                                onChange={(e) => handleDaftarBarang(index, e)}
+                                name="jumlah"
+                                plaintext
+                                value={brg.jumlah} />
+                            </td>
                             <td>
                               <Button
                                 onClick={(e) => removeItemBarang(index, e)} 
