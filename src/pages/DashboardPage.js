@@ -4,7 +4,7 @@ import SideMenu from "../components/SideMenu"
 const DashboardPage = () => {
   return (
     <>
-      <SideMenu />
+      
     </>
   )
 }
