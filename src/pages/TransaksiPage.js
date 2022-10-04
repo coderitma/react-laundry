@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useState } from "react"
 import { Card, Col, Container, Row, Form, Button, Table, Modal } from "react-bootstrap"
+import PilihBarang from "../components/PilihBarang";
 
 
 const ModalCetak = ({heading, body, status, handleClose, cetakFaktur}) => {
@@ -20,25 +21,31 @@ const ModalCetak = ({heading, body, status, handleClose, cetakFaktur}) => {
   </Modal>
 }
 
+
+const defaultTerima = {
+  tanggalTerima: "",
+  namaCustomer: "",
+  alamat: "",
+  nomorHP: "",
+  uangMuka: 0,
+  berat: 0,
+  daftarBarang: []
+}
+
+const defaultBarang = {
+  nama: "",
+  jumlah: 0
+}
+
 const TransaksiPage = () => {
-  const [terima, setTerima] = useState({
-    tanggalTerima: "",
-    namaCustomer: "",
-    alamat: "",
-    nomorHP: "",
-    uangMuka: 0,
-    berat: 0,
-    daftarBarang: []
-  });
+  const [terima, setTerima] = useState(defaultTerima);
 
   const [nomorTerima, setNomorTerima] = useState("");
   const [filePDFName, setFilePDFName] = useState("");
   const [statusModal, setStatusModal] = useState(false);
+  const [showPilihBarang, setShowPilihBarang] = useState(false);
 
-  const [barang, setBarang] = useState({
-    nama: "",
-    jumlah: 0
-  })
+  const [barang, setBarang] = useState(defaultBarang)
 
   const [daftarBarang, setDaftarBarang] = useState([]);
 
@@ -63,6 +70,13 @@ const TransaksiPage = () => {
       nama: "",
       jumlah: 0
     })
+  }
+
+  const getBarang = (b) => {
+    let arr = [...daftarBarang]
+    arr.push({nama: b.nama, jumlah: 1})
+    setDaftarBarang(arr);
+    setBarang(defaultBarang)
   }
 
   const removeItemBarang = (index, e) => {
@@ -93,7 +107,7 @@ const TransaksiPage = () => {
         setNomorTerima(response.data._id);
         setFilePDFName(response.data.tanggalTerima)
         setStatusModal(true);
-        console.log(response);
+        handleBatal();
       })
       .catch(error => {
         console.log(error)
@@ -117,6 +131,11 @@ const TransaksiPage = () => {
       link.click();
     });
   }
+
+  const handleBatal = () => {
+    setTerima(defaultTerima)
+    setDaftarBarang([])
+  }
   return (
     <>
       <ModalCetak
@@ -126,14 +145,14 @@ const TransaksiPage = () => {
         handleClose={() => setStatusModal(!statusModal)}
         cetakFaktur={downloadPDF}
       />
+      <PilihBarang getBarang={getBarang} show={showPilihBarang} handleClose={() => setShowPilihBarang(!showPilihBarang)} />
       <Container className="mt-4"> 
         <Row>
           <Col md={4}>
             <Card className="shadow mb-4">
               <Card.Body>
                 <Button onClick={handleKirim} variant="primary">Simpan</Button>&nbsp;
-                <Button onClick={downloadPDF} variant="danger">Download PDF</Button>
-
+                <Button onClick={handleBatal} variant="danger">Batalkan</Button>
               </Card.Body>
             </Card>
             <Card className="mb-4 shadow">
@@ -215,7 +234,8 @@ const TransaksiPage = () => {
                       placeholder="Masukan jumlah" />
                   </Col>
                   <Col>
-                    <Button onClick={tambahBarang} variant="secondary">Tambah</Button>
+                    <Button onClick={tambahBarang} variant="secondary">Tambah</Button> &nbsp;
+                    <Button onClick={() => setShowPilihBarang(true)} variant="secondary">Pilih</Button>
                   </Col>
                 </Row>
                 <Row className="mt-4">
