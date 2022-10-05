@@ -1,26 +1,11 @@
 import axios from "axios";
 import { useState } from "react"
-import { Card, Col, Container, Row, Form, Button, Table, Modal } from "react-bootstrap"
+import { Card, Col, Container, Row, Button, Form } from "react-bootstrap"
+import CustomerAdd from "../components/CustomerAdd";
+import KalkulasiAdd from "../components/KalkulasiAdd";
+import ModalCetak from "../components/ModalCetak";
 import PilihBarang from "../components/PilihBarang";
-
-
-const ModalCetak = ({heading, body, status, handleClose, cetakFaktur}) => {
-  return <Modal show={status} onHide={handleClose}>
-    <Modal.Header closeButton>
-      <Modal.Title>{ heading }</Modal.Title>
-    </Modal.Header>
-    <Modal.Body>{ body }</Modal.Body>
-    <Modal.Footer>
-      <Button variant="secondary" onClick={handleClose}>
-        Close
-      </Button>
-      <Button variant="primary" onClick={cetakFaktur}>
-        Cetak Faktur
-      </Button>
-    </Modal.Footer>
-  </Modal>
-}
-
+import BarangAddList from "../components/BarangAddList";
 
 const defaultTerima = {
   tanggalTerima: "",
@@ -31,6 +16,7 @@ const defaultTerima = {
   berat: 0,
   daftarBarang: []
 }
+
 
 const defaultBarang = {
   nama: "",
@@ -44,6 +30,7 @@ const TransaksiPage = () => {
   const [filePDFName, setFilePDFName] = useState("");
   const [statusModal, setStatusModal] = useState(false);
   const [showPilihBarang, setShowPilihBarang] = useState(false);
+  const [isFirstLayout, setIsFirstLayout] = useState(false)
 
   const [barang, setBarang] = useState(defaultBarang)
 
@@ -136,6 +123,8 @@ const TransaksiPage = () => {
     setTerima(defaultTerima)
     setDaftarBarang([])
   }
+
+
   return (
     <>
       <ModalCetak
@@ -145,142 +134,83 @@ const TransaksiPage = () => {
         handleClose={() => setStatusModal(!statusModal)}
         cetakFaktur={downloadPDF}
       />
-      <PilihBarang getBarang={getBarang} show={showPilihBarang} handleClose={() => setShowPilihBarang(!showPilihBarang)} />
-      <Container className="mt-4"> 
-        <Row>
-          <Col md={4}>
-            <Card className="shadow mb-4">
-              <Card.Body>
-                <Button onClick={handleKirim} variant="primary">Simpan</Button>&nbsp;
-                <Button onClick={handleBatal} variant="danger">Batalkan</Button>
-              </Card.Body>
-            </Card>
-            <Card className="mb-4 shadow">
-              <Card.Body>
-                <Card.Title>Customer</Card.Title>
-                <Form.Group className="mb-3">
-                  <Form.Label>Nama Customer</Form.Label>
-                  <Form.Control 
-                    onChange={handleTerima}
-                    value={terima.namaCustomer}
-                    name="namaCustomer" />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Nomor HP</Form.Label>
-                  <Form.Control
-                    onChange={handleTerima}
-                    value={terima.nomorHP}
-                    name="nomorHP"
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Alamat</Form.Label>
-                  <Form.Control 
-                    onChange={handleTerima}
-                    value={terima.alamat}
-                    name="alamat"
-                    as={'textarea'} rows={5} />
-                </Form.Group>
-              </Card.Body>
-            </Card>
-            <Card className="shadow">
-              <Card.Body>
-                <Card.Title>Kalkulasi</Card.Title>
-                <Form.Group className="mb-3">
-                  <Form.Label>Tanggal terima</Form.Label>
-                  <Form.Control 
-                    onChange={handleTerima}
-                    value={terima.tanggalTerima}
-                    name="tanggalTerima"
-                    type="date" />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Berat</Form.Label>
-                  <Form.Control
-                    onChange={handleTerima}
-                    value={terima.berat}
-                    name="berat"
-                    type="number" />
-                  <Form.Text>Dalam satuan kilogram (Kg).</Form.Text>
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Uang muka</Form.Label>
-                  <Form.Control
-                    onChange={handleTerima}
-                    value={terima.uangMuka}
-                    name="uangMuka"
-                    type="number" />
-                </Form.Group>
-              </Card.Body>
-            </Card>
-          </Col>
-          <Col>
-            <Card className="shadow">
-              <Card.Body>
-                <Card.Title>Barang</Card.Title>
-                <Row className="mt-3">
-                  <Col>
-                    <Form.Control 
-                      onChange={handleBarang}
-                      value={barang.nama}
-                      name="nama"
-                      placeholder="Masukan nama barang" />
-                  </Col>
-                  <Col>
-                    <Form.Control 
-                      onChange={handleBarang}
-                      value={barang.jumlah}
-                      name="jumlah"
-                      placeholder="Masukan jumlah" />
-                  </Col>
-                  <Col>
-                    <Button onClick={tambahBarang} variant="secondary">Tambah</Button> &nbsp;
-                    <Button onClick={() => setShowPilihBarang(true)} variant="secondary">Pilih</Button>
-                  </Col>
-                </Row>
-                <Row className="mt-4">
-                  <Col>
-                    <Table bordered striped>
-                      <thead>
-                        <tr>
-                          <th>Nama Barang</th>
-                          <th>Jumlah Barang</th>
-                          <th>Aksi</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {daftarBarang.map((brg, index) => (
-                          <tr key={index}>
-                            <td>
-                              <Form.Control 
-                                onChange={(e) => handleDaftarBarang(index, e)}
-                                name="nama"
-                                plaintext
-                                value={brg.nama} />
-                            </td>
-                            <td>
-                              <Form.Control 
-                                onChange={(e) => handleDaftarBarang(index, e)}
-                                name="jumlah"
-                                plaintext
-                                value={brg.jumlah} />
-                            </td>
-                            <td>
-                              <Button
-                                onClick={(e) => removeItemBarang(index, e)} 
-                                variant="danger">Hapus</Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Table>
-                  </Col>
-                </Row>
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
+      <PilihBarang 
+        getBarang={getBarang} 
+        show={showPilihBarang} 
+        handleClose={() => setShowPilihBarang(!showPilihBarang)} />
+      
+      <Container className="mt-3"> 
+        <Form.Check 
+          type="switch"
+          onChange={(e) => setIsFirstLayout(!isFirstLayout)}
+          id="custom-switch"
+          value={isFirstLayout}
+          label="Change layout"
+        />
       </Container>
+      { !isFirstLayout && 
+        <Container className="mt-4">
+          <Row className="mb-3">
+            <Col>
+              <CustomerAdd terima={terima} handleTerima={handleTerima} />
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col>
+              <BarangAddList 
+                barang={barang} 
+                handleBarang={handleBarang}
+                tambahBarang={tambahBarang}
+                setShowPilihBarang={setShowPilihBarang} 
+                handleDaftarBarang={handleDaftarBarang} 
+                daftarBarang={daftarBarang}
+                removeItemBarang={removeItemBarang} />
+            </Col>
+          </Row>
+          <Row className="mb-3">
+            <Col>
+              <KalkulasiAdd terima={terima} handleTerima={handleTerima} />
+            </Col>
+          </Row>
+
+          <Row className="mb-3">
+            <Col>
+              <Card className="shadow mb-4">
+                <Card.Body>
+                  <Button onClick={handleKirim} variant="primary">Simpan</Button>&nbsp;
+                  <Button onClick={handleBatal} variant="danger">Batalkan</Button>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+        </Container>
+      }
+      { isFirstLayout &&  
+        <Container className="mt-4"> 
+          <Row>
+            <Col md={4}>
+              <Card className="shadow mb-4">
+                <Card.Body>
+                  <Button onClick={handleKirim} variant="primary">Simpan</Button>&nbsp;
+                  <Button onClick={handleBatal} variant="danger">Batalkan</Button>
+                </Card.Body>
+              </Card>
+              <CustomerAdd terima={terima} handleTerima={handleTerima} />
+              <KalkulasiAdd terima={terima} handleTerima={handleTerima} />
+            </Col>
+            <Col>
+              <BarangAddList 
+                barang={barang} 
+                handleBarang={handleBarang}
+                tambahBarang={tambahBarang}
+                setShowPilihBarang={setShowPilihBarang} 
+                handleDaftarBarang={handleDaftarBarang} 
+                daftarBarang={daftarBarang}
+                removeItemBarang={removeItemBarang} />
+            </Col>
+          </Row>
+        </Container>
+      }
     </>
   )
 }
